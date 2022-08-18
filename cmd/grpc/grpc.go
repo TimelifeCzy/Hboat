@@ -3,6 +3,7 @@ package grpc
 import (
 	"hboat/cmd/root"
 	"hboat/grpc"
+	"hboat/server/webhook"
 
 	"github.com/spf13/cobra"
 )
@@ -26,5 +27,6 @@ func init() {
 }
 
 func grpcFunc(command *cobra.Command, args []string) {
+	go webhook.GrpcWebhook.Run("localhost:7811")
 	grpc.RunWrapper(enableCA, addr, port)
 }

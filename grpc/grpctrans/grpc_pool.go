@@ -3,7 +3,7 @@ package grpctrans
 import (
 	"context"
 	"errors"
-	pb "hboat/grpc/grpctrans/protobuf"
+	pb "hboat/grpc/grpctrans/proto"
 	"sync"
 )
 
@@ -18,6 +18,14 @@ type GRPCPool struct {
 	// 每一个 AgentID 对应到一个 Connection
 	conn  sync.Map
 	count int
+}
+
+func (g *GRPCPool) All() (connection []*Connection) {
+	g.conn.Range(func(_, value interface{}) bool {
+		connection = append(connection, value.(*Connection))
+		return true
+	})
+	return
 }
 
 // 获取 AgentId 对应的 Connection

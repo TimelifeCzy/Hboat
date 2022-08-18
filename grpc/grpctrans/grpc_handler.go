@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	pb "hboat/grpc/grpctrans/protobuf"
-	"log"
+	pb "hboat/grpc/grpctrans/proto"
 	"strconv"
 	"strings"
 	"time"
@@ -25,7 +24,6 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
 	// AgentID 没有在每个包里都重复的必要, 所以仅取第一次, 让第一次回连的时候带上
 	data, err := stream.Recv()
 	if err != nil {
-		// todo: log
 		return err
 	}
 	agentID := data.AgentID
@@ -38,7 +36,7 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
 	}
 	addr := p.Addr.String()
 	// 到这真正连接成功了, 没有问题, 再进行下一步的数据交互
-	log.Printf("get connection %s from %s\n", agentID, addr)
+	fmt.Printf("get connection %s from %s\n", agentID, addr)
 
 	// 开始创建 Connection
 	createAt := time.Now().UnixNano() / (1000 * 1000 * 1000)
@@ -52,6 +50,7 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
 		CommandChan: make(chan *pb.Command),
 		Ctx:         ctx,
 		CancelFunc:  cancelFunc,
+		HostName:    data.Hostname,
 	}
 
 	err = GlobalGRPCPool.Add(agentID, &connection)
@@ -105,22 +104,13 @@ func receiveData(stream pb.Transfer_TransferServer, conn *Connection) {
 }
 
 func handleData(req *pb.RawData) {
-	timeStamp := fmt.Sprintf("%d", req.Timestamp)
 	inIPv4List := strings.Join(req.IntranetIPv4, ",")
 	inIPv6List := strings.Join(req.IntranetIPv6, ",")
 
-	for k, v := range req.GetPkg() {
-		tmp, ok := v.Message["data_type"]
-		if !ok {
-			continue
-		}
-		dataType, err := strconv.Atoi(strings.TrimSpace(tmp))
-		if err != nil {
-			continue
-		}
-		fMessage := req.GetPkg()[k].Message
+	for _, v := range req.Data {
+		dataType := v.DataType
+		fMessage := make(map[string]string)
 		fMessage["agent_id"] = req.AgentID
-		fMessage["timestamp"] = timeStamp
 		fMessage["hostname"] = req.Hostname
 		fMessage["version"] = req.Version
 		fMessage["in_ipv4_list"] = inIPv4List
@@ -129,6 +119,9 @@ func handleData(req *pb.RawData) {
 		switch dataType {
 		case 1:
 			parseHeartBeat(fMessage, req)
+		case 2:
+		default:
+			fmt.Println(string(v.Body))
 		}
 	}
 }

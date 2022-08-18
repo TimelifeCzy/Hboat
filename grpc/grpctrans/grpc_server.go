@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	_ "hboat/grpc/grpctrans/compressor"
-	pb "hboat/grpc/grpctrans/protobuf"
+	pb "hboat/grpc/grpctrans/proto"
 )
 
 const (
