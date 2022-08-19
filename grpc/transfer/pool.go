@@ -1,9 +1,9 @@
-package grpctrans
+package transfer
 
 import (
 	"context"
 	"errors"
-	pb "hboat/grpc/grpctrans/proto"
+	pb "hboat/grpc/transfer/proto"
 	"sync"
 )
 

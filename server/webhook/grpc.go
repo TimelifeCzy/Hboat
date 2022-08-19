@@ -2,8 +2,8 @@ package webhook
 
 // grpc webhook
 import (
-	"hboat/grpc/grpctrans"
-	pb "hboat/grpc/grpctrans/proto"
+	"hboat/grpc/transfer"
+	pb "hboat/grpc/transfer/proto"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +16,7 @@ func init() {
 }
 
 func GrpcGetAgents(c *gin.Context) {
-	c.JSON(200, grpctrans.GlobalGRPCPool.All())
+	c.JSON(200, transfer.GlobalGRPCPool.All())
 }
 
 func GrpcSendPlugin(c *gin.Context) {
@@ -25,7 +25,7 @@ func GrpcSendPlugin(c *gin.Context) {
 		c.JSON(500, "agentid is needed")
 		return
 	}
-	connection, err := grpctrans.GlobalGRPCPool.Get(agentid)
+	connection, err := transfer.GlobalGRPCPool.Get(agentid)
 	if err != nil {
 		c.JSON(500, err)
 		return

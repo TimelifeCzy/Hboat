@@ -1,4 +1,4 @@
-package grpctrans
+package transfer
 
 import (
 	"crypto/tls"
@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
-	_ "hboat/grpc/grpctrans/compressor"
-	pb "hboat/grpc/grpctrans/proto"
+	_ "hboat/grpc/transfer/compressor"
+	pb "hboat/grpc/transfer/proto"
 )
 
 const (

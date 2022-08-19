@@ -1,10 +1,10 @@
-package grpctrans
+package transfer
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	pb "hboat/grpc/grpctrans/proto"
+	pb "hboat/grpc/transfer/proto"
 	"strconv"
 	"strings"
 	"time"

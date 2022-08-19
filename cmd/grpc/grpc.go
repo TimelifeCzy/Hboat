@@ -27,6 +27,6 @@ func init() {
 }
 
 func grpcFunc(command *cobra.Command, args []string) {
-	go webhook.GrpcWebhook.Run("localhost:7811")
+	go webhook.GrpcWebhook.Run("0.0.0.0:7811")
 	grpc.RunWrapper(enableCA, addr, port)
 }

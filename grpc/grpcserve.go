@@ -1,10 +1,10 @@
 package grpc
 
 import (
-	"hboat/grpc/grpctrans"
-	"hboat/grpc/grpctrans/conf"
+	"hboat/grpc/transfer"
+	"hboat/grpc/transfer/conf"
 )
 
 func RunWrapper(enableCA bool, addr string, port int) {
-	grpctrans.RunServer(enableCA, addr, port, conf.ServerCert, conf.ServerKey, conf.CaCert)
+	transfer.RunServer(enableCA, addr, port, conf.ServerCert, conf.ServerKey, conf.CaCert)
 }
