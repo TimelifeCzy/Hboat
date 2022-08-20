@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hboat/grpc/transfer/handler"
 	pb "hboat/grpc/transfer/proto"
 	"strconv"
 	"strings"
@@ -30,12 +31,11 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
 	// peer 获取端对端IP, 如果后期网关则... http://xiaorui.cc/archives/6892
 	p, ok := peer.FromContext(stream.Context())
 	if !ok {
-		// todo: log
 		return errors.New("client ip get error")
 	}
 	addr := p.Addr.String()
 	// 到这真正连接成功了, 没有问题, 再进行下一步的数据交互
-	fmt.Printf("get connection %s from %s\n", agentID, addr)
+	fmt.Printf("Get connection %s from %s\n", agentID, addr)
 
 	// 开始创建 Connection
 	createAt := time.Now().UnixNano() / (1000 * 1000 * 1000)
@@ -114,13 +114,17 @@ func handleData(req *pb.RawData) {
 		fMessage["version"] = req.Version
 		fMessage["in_ipv4_list"] = inIPv4List
 		fMessage["in_ipv6_list"] = inIPv6List
+		fMessage["product"] = req.Product
 
-		switch dataType {
-		case 1:
-			parseHeartBeat(fMessage, req)
-		case 2:
-		default:
-			fmt.Println(string(v.Body))
+		if dataType >= 100 && dataType <= 400 {
+			handler.ParseWinDataDispatch(fMessage, req, int(dataType))
+		} else {
+			switch dataType {
+			case 1:
+				parseHeartBeat(fMessage, req)
+			default:
+				fmt.Println(string(v.Body))
+			}
 		}
 	}
 }
@@ -178,8 +182,6 @@ func parseHeartBeat(hb map[string]string, req *pb.RawData) {
 	conn.LastHeartBeatTime = time.Now().Unix()
 
 	// 传输时间检测
-
-	// TODO: 测试
 	fmt.Printf("%f, %d\n", conn.Cpu, conn.Memory)
 }
 
