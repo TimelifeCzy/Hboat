@@ -95,7 +95,7 @@ func RunServer(enableCA bool, addr string, port int, crtFile, keyFile, caFile []
 		os.Exit(-1)
 	}
 
-	log.Printf("tcp listen OK: %v\n", lis.Addr().String())
+	log.Printf("tcp listen OK: %v, CA: %v\n", lis.Addr().String(), enableCA)
 	if err = server.Serve(lis); err != nil {
 		log.Printf("listen error: %v\n", err)
 		os.Exit(-1)

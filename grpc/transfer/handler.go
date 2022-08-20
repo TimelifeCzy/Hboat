@@ -20,7 +20,6 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
 	if err := GlobalGRPCPool.CheckLimit(); err != nil {
 		return err
 	}
-
 	// AgentID 没有在每个包里都重复的必要, 所以仅取第一次, 让第一次回连的时候带上
 	data, err := stream.Recv()
 	if err != nil {

@@ -10,7 +10,6 @@ import (
 var GlobalGRPCPool = &GRPCPool{}
 
 // config.yml
-// todo:
 var ConnLimit = 1000
 
 // 任务精确性, 要具体到 agentID, 所以每一个 AgentID 需要维护自己的一个 Command List

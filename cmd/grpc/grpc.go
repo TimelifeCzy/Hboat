@@ -20,7 +20,7 @@ var port int
 var addr string
 
 func init() {
-	grpcCommand.PersistentFlags().BoolVar(&enableCA, "ca", true, "enable ca")
+	grpcCommand.PersistentFlags().BoolVar(&enableCA, "ca", false, "enable ca")
 	grpcCommand.PersistentFlags().IntVar(&port, "port", 8888, "grpc serve port")
 	grpcCommand.PersistentFlags().StringVar(&addr, "addr", "0.0.0.0", "grpc serve address, set to localhost if you need")
 	root.RootCommand.AddCommand(grpcCommand)
