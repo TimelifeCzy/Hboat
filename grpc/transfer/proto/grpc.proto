@@ -6,14 +6,15 @@ package grpc;
 
 message RawData{
   repeated Record Data = 1;
-  string AgentID = 2;
-  repeated string IntranetIPv4 = 3;
-  repeated string ExtranetIPv4 = 4;
-  repeated string IntranetIPv6 = 5;
-  repeated string ExtranetIPv6 = 6;
-  string Hostname = 7;
-  string Version = 8;
-  string Product = 9;
+  repeated Item Item = 2;
+  string AgentID = 3;
+  repeated string IntranetIPv4 = 4;
+  repeated string ExtranetIPv4 = 5;
+  repeated string IntranetIPv6 = 6;
+  repeated string ExtranetIPv6 = 7;
+  string Hostname = 8;
+  string Version = 9;
+  string Product = 10;
 }
 
 message Record{
