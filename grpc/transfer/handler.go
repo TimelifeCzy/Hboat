@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hboat/grpc/transfer/handler"
 	pb "hboat/grpc/transfer/proto"
 	"strconv"
 	"strings"
@@ -24,6 +23,7 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
 	// AgentID 没有在每个包里都重复的必要, 所以仅取第一次, 让第一次回连的时候带上
 	data, err := stream.Recv()
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	agentID := data.AgentID
@@ -116,19 +116,19 @@ func handleData(req *pb.RawData) {
 		fMessage["in_ipv6_list"] = inIPv6List
 		fMessage["product"] = req.Product
 
-		if dataType >= 100 && dataType <= 400 {
-			for _, item := range req.Item {
-				// backport for windows for temp
-				handler.ParseWinDataDispatch(item.Fields, req, int(dataType))
-			}
-		} else {
-			switch dataType {
-			case 1:
-				parseHeartBeat(fMessage, req)
-			default:
-				fmt.Println(string(v.Body))
-			}
+		// if dataType >= 100 && dataType <= 400 {
+		// 	for _, item := range req.Item {
+		// 		// backport for windows for temp
+		// 		handler.ParseWinDataDispatch(item.Fields, req, int(dataType))
+		// 	}
+		// } else {
+		switch dataType {
+		case 1:
+			parseHeartBeat(fMessage, req)
+		default:
+			fmt.Println(v.Body)
 		}
+		// }
 	}
 }
 
