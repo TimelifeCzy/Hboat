@@ -1,7 +1,5 @@
 package registry
 
-// 共享一个 registry, 数据库形式共享
-// 序列化之后保存
 type ServiceRegistry struct {
 	AgentID         string   `json:"agentid"`
 	PrivateIpv4     []string `json:"privateipv4"`

@@ -2,7 +2,7 @@ package webhook
 
 // grpc webhook
 import (
-	"hboat/grpc/transfer"
+	"hboat/grpc/transfer/pool"
 	pb "hboat/grpc/transfer/proto"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +16,7 @@ func init() {
 }
 
 func GrpcGetAgents(c *gin.Context) {
-	c.JSON(200, transfer.GlobalGRPCPool.All())
+	c.IndentedJSON(200, pool.GlobalGRPCPool.All())
 }
 
 func GrpcSendPlugin(c *gin.Context) {
@@ -25,7 +25,7 @@ func GrpcSendPlugin(c *gin.Context) {
 		c.JSON(500, "agentid is needed")
 		return
 	}
-	connection, err := transfer.GlobalGRPCPool.Get(agentid)
+	connection, err := pool.GlobalGRPCPool.Get(agentid)
 	if err != nil {
 		c.JSON(500, err)
 		return
@@ -43,16 +43,3 @@ func GrpcSendPlugin(c *gin.Context) {
 	connection.CommandChan <- command
 	c.JSON(200, "success")
 }
-
-// TEST
-// command := &pb.Command{
-// 	Config: []*pb.ConfigItem{
-// 		{
-// 			Name:        "eBPF-driver",
-// 			SHA256:      "7577c6e392fad13081b6e62c1e61b1071b9221c50c82ada756c2c65840caaa91",
-// 			DownloadURL: []string{"http://127.0.0.1:8000/eBPF-driver"},
-// 			Version:     "1.0.0",
-// 		},
-// 	},
-// }
-// connection.CommandChan <- command

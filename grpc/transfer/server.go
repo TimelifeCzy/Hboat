@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	_ "hboat/grpc/transfer/compressor"
+	"hboat/grpc/transfer/handler"
 	pb "hboat/grpc/transfer/proto"
 )
 
@@ -87,7 +88,7 @@ func RunServer(enableCA bool, addr string, port int, crtFile, keyFile, caFile []
 	}
 
 	server := grpc.NewServer(opts...)
-	pb.RegisterTransferServer(server, &TransferHandler{})
+	pb.RegisterTransferServer(server, &handler.TransferHandler{})
 	reflection.Register(server)
 	lis, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
