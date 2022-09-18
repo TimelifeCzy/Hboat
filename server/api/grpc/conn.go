@@ -52,6 +52,7 @@ func AgentStat(c *gin.Context) {
 }
 
 type AgentBasicResp struct {
+	AgentID string `json:"agent_id"`
 	Hostname interface{} `json:"hostname"`
 	LastHBTime int64 `json:"last_heartbeat_time"`
 	CreateAt int64 `json:"create_at"`
@@ -65,6 +66,7 @@ func AgentBasic(c *gin.Context) {
 	for _, v := range res {
 		detail := v.GetAgentDetail()		
 		tmp := AgentBasicResp{
+			AgentID: v.AgentID,
 			Hostname: detail["hostname"],
 			LastHBTime: v.LastHBTime,
 			CreateAt: v.CreateAt,
