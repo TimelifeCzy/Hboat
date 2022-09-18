@@ -50,3 +50,28 @@ func AgentStat(c *gin.Context) {
 	}
 	common.Response(c, common.SuccessCode, res)
 }
+
+type AgentBasicResp struct {
+	Hostname interface{} `json:"hostname"`
+	LastHBTime int64 `json:"last_heartbeat_time"`
+	CreateAt int64 `json:"create_at"`
+	Platform interface{} `json:"platform"`
+	Addr interface{} `json:"addr"`
+}
+
+func AgentBasic(c *gin.Context) {
+	res := pool.GlobalGRPCPool.All()
+	resList := make([]AgentBasicResp, 0, len(res))
+	for _, v := range res {
+		detail := v.GetAgentDetail()		
+		tmp := AgentBasicResp{
+			Hostname: detail["hostname"],
+			LastHBTime: v.LastHBTime,
+			CreateAt: v.CreateAt,
+			Platform: detail["platform"],
+			Addr: v.Addr,
+		}
+		resList = append(resList, tmp)
+	}
+	common.Response(c, common.SuccessCode, resList)
+}

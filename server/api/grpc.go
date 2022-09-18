@@ -16,6 +16,7 @@ func RunGrpcServer(port int) {
 	rGroup.GET("/conn/count", gApi.AgentCount)
 	rGroup.GET("/conn/all", gApi.ConnStat)
 	rGroup.GET("/conn/stat", gApi.AgentStat)
+	rGroup.GET("/conn/basic", gApi.AgentBasic)
 
 	router.Run(fmt.Sprintf(":%d", port))
 }
