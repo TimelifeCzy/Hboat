@@ -58,20 +58,32 @@ func (g *GRPCPool) Count() int {
 	return len(g.connPool)
 }
 
+// SendCommand send command to specified agent_id
 func (g *GRPCPool) SendCommand(agentID string, command *pb.Command) (err error) {
 	conn, err := g.Get(agentID)
 	if err != nil {
 		return err
 	}
+
+	comm := &Command{
+		Command: command,
+		Error:   nil,
+		Ready:   make(chan bool, 1),
+	}
+
 	select {
-	case conn.CommandChan <- command:
-	case <-time.After(3 * time.Second):
-		return errors.New("command send timeout 3s")
+	case conn.CommandChan <- comm:
+	case <-time.After(2 * time.Second):
+		return errors.New("command channel is full")
 	}
 	// After sending the command, a wating action like Elkied should be implemented
 	// for knowning the result of the command execution, use a notify latter
-	// TODO
-	return nil
+	select {
+	case <-comm.Ready:
+		return comm.Error
+	case <-time.After(2 * time.Second):
+		return errors.New("the command has been sent but get results timed out")
+	}
 }
 
 func (g *GRPCPool) All() []*Connection {
