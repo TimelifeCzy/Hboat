@@ -50,7 +50,14 @@ const (
 	UF_ROOTKIT_ID             WinClientNode = 212
 
 	// etw
+	UF_ETW_PROCESSINFO WinClientNode = 300
+	UF_ETW_THREADINFO  WinClientNode = 301
+	UF_ETW_IMAGEMOD    WinClientNode = 302
+	UF_ETW_NETWORK     WinClientNode = 303
+	UF_ETW_REGISTERTAB WinClientNode = 304
+	UF_ETW_FILEIO      WinClientNode = 305
 
+	// max end
 	NF_EXIT WinClientNode = 1000
 )
 
@@ -261,8 +268,9 @@ type UEtwNetWorkTabinfo struct {
 	Win_Etw_network_processId       string `json:"win_network_processid"`
 }
 
-// 2021-11-27 添加win客户端解析函数
-// 2022-4-4数据改版
+// 2021-11-27  v1.0 添加解析
+// 2022-4-4    v2.0 数据改版
+// 2022-9-x    v2.x 数据完善
 func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 	udata := hb["udata"]
 	// golang switch从上到下遍历去匹配 - 理论上效率和if else if 一致
@@ -658,6 +666,10 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 	} else if 403 == dataType { // Kernel mon enable
 		fmt.Println(udata)
 	} else if 404 == dataType { // Kernel mon disable
+		fmt.Println(udata)
+	} else if 405 == dataType {
+		fmt.Println(udata)
+	} else if 406 == dataType {
 		fmt.Println(udata)
 	}
 }
