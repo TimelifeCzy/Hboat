@@ -11,8 +11,16 @@ import (
 	"hboat/grpc/transfer/pool"
 	pb "hboat/grpc/transfer/proto"
 
+	"hboat/config"
+	ds "hboat/datasource"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc/peer"
 )
+
+var mongoClient *mongo.Client
+var statusCollection *mongo.Collection
 
 // TransferHandler implements svc.TransferServer
 type TransferHandler struct{}
@@ -30,27 +38,32 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
 	addr := p.Addr.String()
 	fmt.Printf("Get connection %s from %s\n", agentID, addr)
 
-	createAt := time.Now().UnixNano() / (1000 * 1000 * 1000)
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	connection := pool.Connection{
+	conn := pool.Connection{
 		AgentID:     agentID,
 		Addr:        addr,
-		CreateAt:    createAt,
+		CreateAt:    time.Now().Unix(),
 		CommandChan: make(chan *pool.Command),
 		Ctx:         ctx,
 		CancelFunc:  cancelFunc,
 	}
-
-	err = pool.GlobalGRPCPool.Add(agentID, &connection)
-	if err != nil {
+	if err = pool.GlobalGRPCPool.Add(agentID, &conn); err != nil {
 		return err
 	}
 
-	defer pool.GlobalGRPCPool.Delete(agentID)
-	go receiveData(stream, &connection)
-	go sendData(stream, &connection)
+	// 更新数据
+	// TODO: channel
+	_, err = statusCollection.InsertOne(context.Background(), bson.M{"agent_id": agentID,
+		"addr": addr, "create_at": conn.CreateAt})
+	if err != nil {
+		statusCollection.UpdateOne(context.Background(), bson.M{"agent_id": agentID},
+			bson.M{"$set": bson.M{"addr": addr, "create_at": conn.CreateAt}})
+	}
 
-	<-connection.Ctx.Done()
+	defer pool.GlobalGRPCPool.Delete(agentID)
+	go receiveData(stream, &conn)
+	go sendData(stream, &conn)
+	<-conn.Ctx.Done()
 	return nil
 }
 
@@ -96,6 +109,7 @@ func receiveData(stream pb.Transfer_TransferServer, conn *pool.Connection) {
 // handleData handles received data
 //
 // TODO: heartbeat to influxdb or ES
+// Handle processes
 func handleData(req *pb.RawData, conn *pool.Connection) {
 	intranet_ipv4 := strings.Join(req.IntranetIPv4, ",")
 	intranet_ipv6 := strings.Join(req.IntranetIPv6, ",")
@@ -129,6 +143,8 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 				}
 			}
 			conn.LastHBTime = time.Now().Unix()
+			statusCollection.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
+				bson.M{"$set": bson.M{"agent_detail": data, "last_heartbeat_time": conn.LastHBTime}})
 			conn.SetAgentDetail(data)
 		// plugin-heartbeat
 		case dataType == 2:
@@ -146,6 +162,8 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 					data[k] = v
 				}
 			}
+			statusCollection.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
+				bson.M{"$set": bson.M{"plugin_detail": bson.M{value.Body.Fields["name"]: data}}})
 			conn.SetPluginDetail(value.Body.Fields["name"], data)
 		// windows
 		case dataType >= 100 && dataType <= 400:
@@ -157,4 +175,13 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 			// TODO
 		}
 	}
+}
+
+func init() {
+	var err error
+	mongoClient, err = ds.NewMongoDB(config.MongoUri, 5)
+	if err != nil {
+		panic(err)
+	}
+	statusCollection = mongoClient.Database(ds.Database).Collection(config.MAgentStatusCollection)
 }
