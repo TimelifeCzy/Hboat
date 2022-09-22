@@ -17,35 +17,36 @@ import (
 var mongoClient *mongo.Client
 var statusCollection *mongo.Collection
 
-type AgentStatus struct {
-	AgentID      string                            `bson:"agent_id"`
-	Addr         string                            `bson:"addr"`
-	CreateAt     int64                             `bson:"create_at"`
-	LastHBTime   int64                             `bson:"last_heartbeat_time"`
-	AgentDetail  map[string]interface{}            `bson:"agent_detail"`
-	PluginDetail map[string]map[string]interface{} `bson:"plugin_detail"`
-}
-
-func AgentIDs(c *gin.Context) {
-	agentIDs := make([]string, 0)
-	for _, v := range pool.GlobalGRPCPool.All() {
-		agentIDs = append(agentIDs, v.AgentID)
-	}
-	common.Response(c, common.SuccessCode, agentIDs)
-}
-
-func AgentCount(c *gin.Context) {
-	common.Response(c, common.SuccessCode, pool.GlobalGRPCPool.Count())
-}
-
 type ConnStatRsp struct {
 	AgentInfo   map[string]interface{}            `json:"agent_info"`
 	PluginsInfo map[string]map[string]interface{} `json:"plugins_info"`
 }
 
+type CountRsp struct {
+	Total   int64 `json:"total"`
+	Online  int64 `json:"online"`
+	Offline int64 `json:"offline"`
+}
+
+// AgentCount returns the count of agent status.
+//
+// An agent is online with 2 conditions. status is on, and heartbeat
+// available within 30 mins.
+func AgentCount(c *gin.Context) {
+	count, err := statusCollection.CountDocuments(context.Background(), bson.D{})
+	if err != nil {
+		common.Response(c, common.ErrorCode, err.Error())
+		return
+	}
+	resp := CountRsp{}
+	resp.Total = count
+
+	common.Response(c, common.SuccessCode, pool.GlobalGRPCPool.Count())
+}
+
 func AgentStat(c *gin.Context) {
 	agentid := c.Query("agent_id")
-	var as AgentStatus
+	var as ds.AgentStatus
 	err := statusCollection.FindOne(context.Background(), bson.M{"agent_id": agentid}).Decode(&as)
 	if err != nil {
 		common.Response(c, common.ErrorCode, err.Error())
@@ -85,7 +86,7 @@ func AgentBasic(c *gin.Context) {
 	resList := make([]AgentBasicResp, 0, 10)
 	now := time.Now().Unix()
 	for cur.Next(context.Background()) {
-		var as AgentStatus
+		var as ds.AgentStatus
 		if err := cur.Decode(&as); err != nil {
 			continue
 		}
@@ -114,7 +115,7 @@ func AgentBasic(c *gin.Context) {
 
 func init() {
 	var err error
-	mongoClient, err = ds.NewMongoDB(config.MongoUri, 5)
+	mongoClient, err = ds.NewMongoDB(config.MongoURI, 5)
 	if err != nil {
 		panic(err)
 	}

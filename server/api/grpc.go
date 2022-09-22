@@ -17,7 +17,6 @@ func RunGrpcServer(port int) {
 	rGroup := router.Group("/api/v1/grpc/")
 	// TODO: auth middleware
 	rGroup.POST("/command", gApi.SendCommand)
-	rGroup.GET("/conn/list", gApi.AgentIDs)
 	rGroup.GET("/conn/count", gApi.AgentCount)
 	rGroup.GET("/conn/stat", gApi.AgentStat)
 	rGroup.GET("/conn/basic", gApi.AgentBasic)

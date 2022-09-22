@@ -46,6 +46,8 @@ func (g *GRPCPool) Add(agentID string, conn *Connection) error {
 	return nil
 }
 
+// Delete agentID from the connection pool. At the same time, we should remove
+// the mongo instance
 func (g *GRPCPool) Delete(agentID string) {
 	g.connLock.Lock()
 	defer g.connLock.Unlock()

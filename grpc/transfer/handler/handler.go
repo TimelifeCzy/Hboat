@@ -1,3 +1,4 @@
+// handler handles the grpc connection
 package handler
 
 import (
@@ -19,25 +20,33 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-var mongoClient *mongo.Client
-var statusCollection *mongo.Collection
+// Only instance for the grpc service, updates the collections in
+// this status.
+var statusC *mongo.Collection
 
 // TransferHandler implements svc.TransferServer
 type TransferHandler struct{}
 
-func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
+func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) (err error) {
+	var agentID string
+	var addr string
+
+	// Receive the very first package once grpc established
 	data, err := stream.Recv()
 	if err != nil {
 		return err
 	}
-	agentID := data.AgentID
+
+	// Get the agentid and ip address from connection.
+	agentID = data.AgentID
 	p, ok := peer.FromContext(stream.Context())
 	if !ok {
 		return errors.New("client ip get error")
 	}
-	addr := p.Addr.String()
+	addr = p.Addr.String()
 	fmt.Printf("Get connection %s from %s\n", agentID, addr)
 
+	// Initialize the connection
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	conn := pool.Connection{
 		AgentID:     agentID,
@@ -51,17 +60,16 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
 		return err
 	}
 
-	// 更新数据
-	// TODO: channel
-	_, err = statusCollection.InsertOne(context.Background(), bson.M{"agent_id": agentID,
-		"addr": addr, "create_at": conn.CreateAt})
-	if err != nil {
-		statusCollection.UpdateOne(context.Background(), bson.M{"agent_id": agentID},
-			bson.M{"$set": bson.M{"addr": addr, "create_at": conn.CreateAt}})
+	// Data update, also, update the address of the grpc for sendcommand
+	// TODO: use channel or just put in kafka
+	if _, err = statusC.UpdateOne(context.Background(), bson.M{"agent_id": agentID},
+		bson.M{"$set": bson.M{"addr": addr, "create_at": conn.CreateAt, "agent_detail": bson.M{"hostname": data.Hostname}}}); err != nil {
+		statusC.InsertOne(context.Background(), bson.M{"agent_id": agentID,
+			"addr": addr, "create_at": conn.CreateAt})
 	}
 
 	defer pool.GlobalGRPCPool.Delete(agentID)
-	go receiveData(stream, &conn)
+	go recvData(stream, &conn)
 	go sendData(stream, &conn)
 	<-conn.Ctx.Done()
 	return nil
@@ -90,7 +98,7 @@ func sendData(stream pb.Transfer_TransferServer, conn *pool.Connection) {
 	}
 }
 
-func receiveData(stream pb.Transfer_TransferServer, conn *pool.Connection) {
+func recvData(stream pb.Transfer_TransferServer, conn *pool.Connection) {
 	defer conn.CancelFunc()
 	for {
 		select {
@@ -143,7 +151,7 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 				}
 			}
 			conn.LastHBTime = time.Now().Unix()
-			statusCollection.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
+			statusC.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
 				bson.M{"$set": bson.M{"agent_detail": data, "last_heartbeat_time": conn.LastHBTime}})
 			conn.SetAgentDetail(data)
 		// plugin-heartbeat
@@ -162,9 +170,16 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 					data[k] = v
 				}
 			}
-			statusCollection.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
+			statusC.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
 				bson.M{"$set": bson.M{"plugin_detail": bson.M{value.Body.Fields["name"]: data}}})
 			conn.SetPluginDetail(value.Body.Fields["name"], data)
+		// For now, we only take care some basic record from linux and windows, like processes,
+		// sockets and so on, which should be collected by plugin collector. The others datas,
+		// just put it in kafka. Maybe, we'll update the agent, let the agent upload these to
+		// kafka directly
+		//
+		// TODO: kafka upload under dev
+
 		// windows
 		case dataType >= 100 && dataType <= 400:
 			for _, item := range req.Item {
@@ -178,10 +193,9 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 }
 
 func init() {
-	var err error
-	mongoClient, err = ds.NewMongoDB(config.MongoUri, 5)
+	mongoClient, err := ds.NewMongoDB(config.MongoURI, 5)
 	if err != nil {
 		panic(err)
 	}
-	statusCollection = mongoClient.Database(ds.Database).Collection(config.MAgentStatusCollection)
+	statusC = mongoClient.Database(ds.Database).Collection(config.MAgentStatusCollection)
 }

@@ -1,3 +1,7 @@
+// ServiceRegistry
+//
+// This package is invalid for now. It will be updated once
+// a look-aside LB is implemented in Hades
 package registry
 
 type ServiceRegistry struct {
@@ -14,12 +18,6 @@ type ServiceRegistry struct {
 	Online          bool     `json:"online"`
 }
 
-func (s *ServiceRegistry) Regist() {
-	// if jsonBytes, err := json.Marshal(s); err == nil {
-	// 	string(jsonBytes)
-	// }
-}
+func (s *ServiceRegistry) Regist() {}
 
-func (s *ServiceRegistry) Quit() {
-
-}
+func (s *ServiceRegistry) Quit() {}

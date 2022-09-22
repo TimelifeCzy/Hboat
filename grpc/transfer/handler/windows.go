@@ -266,17 +266,18 @@ type UEtwNetWorkTabinfo struct {
 func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 	udata := hb["udata"]
 	// golang switch从上到下遍历去匹配 - 理论上效率和if else if 一致
-	if 100 == dataType {
+	switch dataType {
+	case 100:
 		var krootkitssdt KRootkitSsdt
 		err := json.Unmarshal([]byte(udata), &krootkitssdt)
 		if err != nil {
-			fmt.Printf("unarshar err=%v", err)
+			fmt.Printf("unarshar err=%v\n", err)
 			return
 		}
 		ssdt_id := krootkitssdt.Win_Rootkit_Ssdt_id
 		ssdt_offset := krootkitssdt.Win_Rootkit_Ssdt_offsetaddr
-		fmt.Println("[ArkLog] sstd_id: %s - sstd_addr: %s", ssdt_id, ssdt_offset)
-	} else if 101 == dataType {
+		fmt.Printf("[ArkLog] sstd_id: %s - sstd_addr: %s\n", ssdt_id, ssdt_offset)
+	case 101:
 		var krootkitidt KRootkitIdt
 		err := json.Unmarshal([]byte(udata), &krootkitidt)
 		if err != nil {
@@ -285,8 +286,8 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		}
 		idt_id := krootkitidt.Win_Rootkit_Idt_id
 		idt_offset := krootkitidt.Win_Rootkit_Idt_offsetaddr
-		fmt.Println("[ArkLog] idt_id: %s - idt_addr: %s", idt_id, idt_offset)
-	} else if 103 == dataType {
+		fmt.Printf("[ArkLog] idt_id: %s - idt_addr: %s\n", idt_id, idt_offset)
+	case 103:
 		var krootkitdpc KRootkitDpc
 		err := json.Unmarshal([]byte(udata), &krootkitdpc)
 		if err != nil {
@@ -297,8 +298,8 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		//dpctimeobj :=krootkitdpc.win_rootkit_dpc_timeobj
 		dpcrout := krootkitdpc.Win_Rootkit_Dpc_timeroutine
 		dpctime := krootkitdpc.Win_Rootkit_Dpc_periodtime
-		fmt.Println("[ArkLog] dpcaddr: %s - dpc_time: %s - dpc_route: %s", dpc, dpctime, dpcrout)
-	} else if 108 == dataType {
+		fmt.Printf("[ArkLog] dpcaddr: %s - dpc_time: %s - dpc_route: %s\n", dpc, dpctime, dpcrout)
+	case 108:
 		var krootkitfsd KRootkitFsd
 		err := json.Unmarshal([]byte(udata), &krootkitfsd)
 		if err != nil {
@@ -306,56 +307,58 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 			return
 		}
 		mod := krootkitfsd.Win_Rootkit_Fsd_fsdmod
-		if "1" == mod {
+		if mod == "1" {
 			id := krootkitfsd.Win_Rootkit_Fsd_fsdfastfat_id
 			mjaddr := krootkitfsd.Win_Rootkit_Fsd_fsdfastfat_mjaddr
-			fmt.Println("[ArkLog] fastfatid: %s - fastfataddr: %s", id, mjaddr)
-		} else if "2" == mod {
+			fmt.Printf("[ArkLog] fastfatid: %s - fastfataddr: %s\n", id, mjaddr)
+		} else if mod == "2" {
 			id := krootkitfsd.Win_Rootkit_Fsd_fsdntfs_id
 			mjaddr := krootkitfsd.Win_Rootkit_Fsd_fsdntfs_mjaddr
-			fmt.Println("[ArkLog] ntfsid: %s - ntfsaddr: %s", id, mjaddr)
+			fmt.Printf("[ArkLog] ntfsid: %s - ntfsaddr: %s\n", id, mjaddr)
 		}
-	} else if 109 == dataType {
+	case 109:
 		var krootkitmousekey kRootkitMouseKeyMod
 		err := json.Unmarshal([]byte(udata), &krootkitmousekey)
 		if err != nil {
-			fmt.Printf("unarshar err=%v", err)
+			fmt.Printf("unarshar err=%v\n", err)
 			return
 		}
 		mod := krootkitmousekey.Win_Rootkit_MouseKey_Mousekey_mod
-		if "1" == mod {
+		switch mod {
+		case "1":
 			id := krootkitmousekey.Win_Rootkit_MouseKey_Mouse_id
 			mjaddr := krootkitmousekey.Win_Rootkit_MouseKey_Mouse_mjaddr
-			fmt.Println("[ArkLog] fastfatid: %s - fastfataddr: %s", id, mjaddr)
-		} else if "2" == mod {
+			fmt.Printf("[ArkLog] fastfatid: %s - fastfataddr: %s\n", id, mjaddr)
+		case "2":
 			id := krootkitmousekey.Win_Rootkit_MouseKey_i8042_id
 			mjaddr := krootkitmousekey.Win_Rootkit_MouseKey_i8042_mjaddr
-			fmt.Println("[ArkLog] ntfsid: %s - ntfsaddr: %s", id, mjaddr)
-		} else if "3" == mod {
+			fmt.Printf("[ArkLog] ntfsid: %s - ntfsaddr: %s\n", id, mjaddr)
+		case "3":
 			id := krootkitmousekey.Win_Rootkit_MouseKey_kbd_id
 			mjaddr := krootkitmousekey.Win_Rootkit_MouseKey_kbd_mjaddr
-			fmt.Println("[ArkLog] ntfsid: %s - ntfsaddr: %s", id, mjaddr)
+			fmt.Printf("[ArkLog] ntfsid: %s - ntfsaddr: %s\n", id, mjaddr)
 		}
-	} else if 110 == dataType {
+	case 110:
 		var krootkitnet kRootkitNetWork
 		err := json.Unmarshal([]byte(udata), &krootkitnet)
 		if err != nil {
-			fmt.Printf("unarshar err=%v", err)
+			fmt.Printf("unarshar err=%v\n", err)
 			return
 		}
 		mod := krootkitnet.Win_Rootkit_Net_mod
-		if "1" == mod {
+		switch mod {
+		case "1":
 			pid := krootkitnet.Win_Rootkit_Net_tcp_pid
 			localaddrip := krootkitnet.Win_Rootkit_Net_tcp_localIp_port
 			remoteadrip := krootkitnet.Win_Rootkit_Net_tcp_remoteIp_port
 			sockStatus := krootkitnet.Win_Rootkit_Net_tcp_Status
-			fmt.Println("[ArkLog] tcp_pid: %s - local:port %s - remote:port %s - status: %s", pid, localaddrip, remoteadrip, sockStatus)
-		} else if "2" == mod {
+			fmt.Printf("[ArkLog] tcp_pid: %s - local:port %s - remote:port %s - status: %s\n", pid, localaddrip, remoteadrip, sockStatus)
+		case "2":
 			pid := krootkitnet.Win_Rootkit_Net_udp_pid
 			localaddrip := krootkitnet.Win_Rootkit_Net_udp_localIp_port
-			fmt.Println("[ArkLog] udp_pid: %s - local:port %s", pid, localaddrip)
+			fmt.Printf("[ArkLog] udp_pid: %s - local:port %s\n", pid, localaddrip)
 		}
-	} else if 111 == dataType {
+	case 111:
 		var kprocessinfo kRootkitProcessInfo
 		err := json.Unmarshal([]byte(udata), &kprocessinfo)
 		if err != nil {
@@ -364,8 +367,8 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		}
 		processpid := kprocessinfo.Win_Rootkit_Process_pid
 		processinfo := kprocessinfo.Win_Rootkit_Process_Info
-		fmt.Println("pid: %s - processinfo %s", processpid, processinfo)
-	} else if 113 == dataType {
+		fmt.Printf("pid: %s - processinfo %s\n", processpid, processinfo)
+	case 113:
 		var kprocessmod kRootkitProcessMod
 		err := json.Unmarshal([]byte(udata), &kprocessmod)
 		if err != nil {
@@ -378,8 +381,8 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		// process_modentrypoint := kprocessmod.Win_Rootkit_ProcessMod_EntryPoint
 		// process_moddllname := kprocessmod.Win_Rootkit_ProcessMod_BaseDllName
 		process_modfullname := kprocessmod.Win_Rootkit_ProcessMod_FullDllName
-		fmt.Println("pid: %s - modpath %s", pid, process_modfullname)
-	} else if 115 == dataType {
+		fmt.Printf("pid: %s - modpath %s\n", pid, process_modfullname)
+	case 115:
 		var ksysmod kRootkitSysMod
 		err := json.Unmarshal([]byte(udata), &ksysmod)
 		if err != nil {
@@ -388,8 +391,8 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		}
 		sysddlbase := ksysmod.Win_Rootkit_SysMod_DllBase
 		sys_modfullname := ksysmod.Win_Rootkit_SysMod_FullDllName
-		fmt.Println("[ArkLog] sysbaseaddr: %s - syspath %s", sysddlbase, sys_modfullname)
-	} else if 150 == dataType {
+		fmt.Printf("[ArkLog] sysbaseaddr: %s - syspath %s\n", sysddlbase, sys_modfullname)
+	case 150:
 		var kmonprocess KMonitorProcess
 		err := json.Unmarshal([]byte(udata), &kmonprocess)
 		if err != nil {
@@ -400,16 +403,16 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		sysmon_pro_pid := kmonprocess.Win_SysMonitor_process_pid
 		sysmon_pro_endpro := kmonprocess.Win_SysMonitor_process_endprocess
 		sysmon_pro_queryprocesspath := kmonprocess.Win_SysMonitor_process_queryprocesspath
-		if "1" == sysmon_pro_endpro {
+		if sysmon_pro_endpro == "1" {
 			// 启动进程
 			//sysmon_pro_processpath := kmonprocess.Win_SysMonitor_process_processpath
 			sysmon_pro_commandLine := kmonprocess.Win_SysMonitor_process_commandLine
-			fmt.Println("[SysMonitor] Peocess Start - Parentpid: %s Pid: %s querypath %s cmdline %s", sysmon_pro_parentpid, sysmon_pro_pid, sysmon_pro_queryprocesspath, sysmon_pro_commandLine)
+			fmt.Printf("[SysMonitor] Peocess Start - Parentpid: %s Pid: %s querypath %s cmdline %s\n", sysmon_pro_parentpid, sysmon_pro_pid, sysmon_pro_queryprocesspath, sysmon_pro_commandLine)
 			return
 		}
 		// 结束进程
-		fmt.Println("[SysMonitor] Peocess End - Parentpid: %s Pid: %s querypath %s", sysmon_pro_parentpid, sysmon_pro_pid, sysmon_pro_queryprocesspath)
-	} else if 151 == dataType {
+		fmt.Printf("[SysMonitor] Peocess End - Parentpid: %s Pid: %s querypath %s\n", sysmon_pro_parentpid, sysmon_pro_pid, sysmon_pro_queryprocesspath)
+	case 151:
 		var kmonthread KMonitorThread
 		err := json.Unmarshal([]byte(udata), &kmonthread)
 		if err != nil {
@@ -419,8 +422,8 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		sysmon_thr_pid := kmonthread.Win_SysMonitor_thread_pid
 		sysmon_thr_tpid := kmonthread.Win_SysMonitor_thread_id
 		sysmon_thr_status := kmonthread.Win_SysMonitor_thread_status
-		fmt.Println("[SysMonitor] Thread:%d Tid:%d Status:%d ", sysmon_thr_pid, sysmon_thr_tpid, sysmon_thr_status)
-	} else if 152 == dataType {
+		fmt.Printf("[SysMonitor] Thread:%s Tid:%s Status:%s\n", sysmon_thr_pid, sysmon_thr_tpid, sysmon_thr_status)
+	case 152:
 		var kmonmod KMonitorMod
 		err := json.Unmarshal([]byte(udata), &kmonmod)
 		if err != nil {
@@ -432,8 +435,8 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		sysmon_mod_size := kmonmod.Win_SysMonitor_mod_size
 		sysmon_mod_path := kmonmod.Win_SysMonitor_mod_path
 		sysmon_mod_sysimage := kmonmod.Win_SysMonitor_mod_sysimage
-		fmt.Println("[SysMonitor] Image pid: %d base: %d size: %d path: %s", sysmon_mod_pid, sysmon_mod_base, sysmon_mod_size, sysmon_mod_path, sysmon_mod_sysimage)
-	} else if 153 == dataType {
+		fmt.Printf("[SysMonitor] Image pid: %s base: %s size: %s path: %s, image:%s\n", sysmon_mod_pid, sysmon_mod_base, sysmon_mod_size, sysmon_mod_path, sysmon_mod_sysimage)
+	case 153:
 		var kmonreg KMonitorRegtab
 		err := json.Unmarshal([]byte(udata), &kmonreg)
 		if err != nil {
@@ -444,7 +447,7 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		sysmon_reg_tpid := kmonreg.Win_SysMonitor_regtab_tpid
 		sysmon_reg_opeare := kmonreg.Win_SysMonitor_regtab_opeares
 		fmt.Println("[SysMonitor] register", sysmon_reg_pid, sysmon_reg_tpid, sysmon_reg_opeare)
-	} else if 154 == dataType {
+	case 154:
 		var kmonfileobj KMonitorFileInfo
 		err := json.Unmarshal([]byte(udata), &kmonfileobj)
 		if err != nil {
@@ -465,7 +468,7 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		// sysmon_file_SharedDelete := hb["win_sysmonitor_file_SharedDelete"]
 		// sysmon_file_flag := hb["win_sysmonitor_file_flag"]
 		fmt.Println("[SysMonitor] file", sysmon_file_pid, sysmon_file_dosname, sysmon_file_name)
-	} else if 155 == dataType {
+	case 155:
 		var kmonsessionobj KMonitorSession
 		err := json.Unmarshal([]byte(udata), &kmonsessionobj)
 		if err != nil {
@@ -476,8 +479,8 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		// sysmon_session_tpid := hb["win_sysmonitor_session_tpid"]
 		sysmon_session_event := kmonsessionobj.Win_SysMonitor_session_event
 		sysmon_session_id := kmonsessionobj.Win_SysMonitor_session_sessionid
-		fmt.Println("[SysMonitor] session pid:%s event:%s sessionid:%s", sysmon_session_pid, sysmon_session_event, sysmon_session_id)
-	} else if 200 == dataType {
+		fmt.Printf("[SysMonitor] session pid:%s event:%s sessionid:%s\n", sysmon_session_pid, sysmon_session_event, sysmon_session_id)
+	case 200:
 		var uprocessinfo UProcessInfo
 		err := json.Unmarshal([]byte(udata), &uprocessinfo)
 		if err != nil {
@@ -491,20 +494,20 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		usermon_process_path := uprocessinfo.Win_User_Process_Path
 		usermon_process_szexe := uprocessinfo.Win_User_Process_szExeFile
 		fmt.Println("[UserLog]: Processinfo ", usermon_process_pid, usermon_process_pribase, usermon_process_thrcout, usermon_process_parenid, usermon_process_path, usermon_process_szexe)
-	} else if 201 == dataType {
-	} else if 202 == dataType {
+	case 201:
+	case 202:
 		var uautorun UAutoRun
 		err := json.Unmarshal([]byte(udata), &uautorun)
 		if err != nil {
 			fmt.Printf("unarshar err=%v", err)
 			return
 		}
-		usermon_autorun_flag := uautorun.Win_User_autorun_flag
-		if "1" == usermon_autorun_flag {
+		switch uautorun.Win_User_autorun_flag {
+		case "1":
 			usermon_autorun_regname := uautorun.Win_User_autorun_regName
 			usermon_autorun_regkey := uautorun.Win_User_autorun_regKey
 			fmt.Println("[UserLog]: AutoRunReg ", usermon_autorun_regname, usermon_autorun_regkey)
-		} else if "2" == usermon_autorun_flag {
+		case "2":
 			usermon_autorun_tscname := uautorun.Win_User_autorun_tschname
 			usermon_autorun_tscstatus := uautorun.Win_User_autorun_tscState
 			usermon_autorun_tsclasttime := uautorun.Win_User_autorun_tscLastTime
@@ -512,26 +515,26 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 			usermon_autorun_tsccommand := uautorun.Win_User_autorun_tscCommand
 			fmt.Println("[UserLog]: AutoRunRegTsch ", usermon_autorun_tscname, usermon_autorun_tscstatus, usermon_autorun_tsclasttime, usermon_autorun_tscnexttime, usermon_autorun_tsccommand)
 		}
-	} else if 203 == dataType {
+	case 203:
 		var unet UNet
 		err := json.Unmarshal([]byte(udata), &unet)
 		if err != nil {
 			fmt.Printf("unarshar err=%v", err)
 			return
 		}
-		usermon_net_flag := unet.Win_User_net_flag
-		if "1" == usermon_net_flag {
+		switch unet.Win_User_net_flag {
+		case "1":
 			usermon_net_src := unet.Win_User_net_src
 			usermon_net_dst := unet.Win_User_net_dst
 			usermon_net_status := unet.Win_User_net_status
 			usermon_net_pid := unet.Win_User_net_pid
-			fmt.Println("[UserLog]: NetworkTcp ", usermon_net_src, usermon_net_dst, usermon_net_status, usermon_net_pid)
-		} else if "2" == usermon_net_flag {
+			fmt.Printf("[UserLog]: NetworkTcp %s, %s, %s, %s\n", usermon_net_src, usermon_net_dst, usermon_net_status, usermon_net_pid)
+		case "2":
 			usermon_net_src := unet.Win_User_net_src
 			usermon_net_pid := unet.Win_User_net_pid
 			fmt.Println("[UserLog]: NetworkUdp ", usermon_net_src, usermon_net_pid)
 		}
-	} else if 207 == dataType {
+	case 207:
 		var uaccount UAccount
 		err := json.Unmarshal([]byte(udata), &uaccount)
 		if err != nil {
@@ -543,22 +546,22 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		usermon_user_sid := uaccount.Win_User_sysuser_sid
 		usermon_user_flag := uaccount.Win_User_sysuser_flag
 		fmt.Println("[UserLog]: Account ", usermon_user_user, usermon_user_name, usermon_user_sid, usermon_user_flag)
-	} else if 208 == dataType {
+	case 208:
 		var usoftwareserver USoftwareServer
 		err := json.Unmarshal([]byte(udata), &usoftwareserver)
 		if err != nil {
 			fmt.Printf("unarshar err=%v", err)
 			return
 		}
-		usermon_softwareServer_flag := usoftwareserver.Win_User_softwareserver_flag
-		if "1" == usermon_softwareServer_flag {
+		switch usoftwareserver.Win_User_softwareserver_flag {
+		case "1":
 			usermon_software_Name := usoftwareserver.Win_User_server_lpsName
 			usermon_software_DName := usoftwareserver.Win_User_server_lpdName
 			usermon_software_Path := usoftwareserver.Win_User_server_lpPath
 			usermon_software_Descr := usoftwareserver.Win_User_server_lpDescr
 			usermon_software_status := usoftwareserver.Win_User_server_status
 			fmt.Println("[UserLog]: Software ", usermon_software_Name, usermon_software_DName, usermon_software_Path, usermon_software_Descr, usermon_software_status)
-		} else if "2" == usermon_softwareServer_flag {
+		case "2":
 			// usermon_server_Name := hb["win_user_software_lpsName"]
 			// usermon_server_Size := hb["win_user_software_Size"]
 			// usermon_server_Ver := hb["win_user_software_Ver"]
@@ -567,23 +570,23 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 			// usermon_server_data := hb["win_user_software_data"]
 			// usermon_server_venrel := hb["win_user_software_venrel"]
 		}
-	} else if 209 == dataType {
+	case 209:
 		var udriectinfo UDriectInfo
 		err := json.Unmarshal([]byte(udata), &udriectinfo)
 		if err != nil {
 			fmt.Printf("unarshar err=%v", err)
 			return
 		}
-		usermon_driectinfo_flag := udriectinfo.Win_User_driectinfo_flag
-		if "1" == usermon_driectinfo_flag {
+		switch udriectinfo.Win_User_driectinfo_flag {
+		case "1":
 			// usermon_driectinfo_filecout := hb["win_user_driectinfo_filecout"]
 			// usermon_driectinfo_size := hb["win_user_driectinfo_size"]
-		} else if "2" == usermon_driectinfo_flag {
+		case "2":
 			// hb["win_user_driectinfo_filename"]
 			// hb["win_user_driectinfo_filePath"]
 			// hb["win_user_driectinfo_fileSize"]
 		}
-	} else if 210 == dataType {
+	case 210:
 		var ufileinfo UFileInfo
 		err := json.Unmarshal([]byte(udata), &ufileinfo)
 		if err != nil {
@@ -598,7 +601,7 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		// hb["win_user_fileinfo_seFileAccess"]
 		// hb["win_user_fileinfo_seFileCreate"]
 		// hb["win_user_fileinfo_seFileModify"]
-	} else if 300 == dataType {
+	case 300:
 		var uetwprocessinfo UEtwProcessinfo
 		err := json.Unmarshal([]byte(udata), &uetwprocessinfo)
 		if err != nil {
@@ -608,7 +611,7 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		usermon_etw_process_pid := uetwprocessinfo.Win_Etw_processinfo_pid
 		usermon_etw_process_path := uetwprocessinfo.Win_Etw_processinfo_Path
 		fmt.Println("[EtwMonitor]: ProcessInfo: ", usermon_etw_process_pid, usermon_etw_process_path)
-	} else if 301 == dataType {
+	case 301:
 		var uetwthreadinfo UEtwThreadinfo
 		err := json.Unmarshal([]byte(udata), &uetwthreadinfo)
 		if err != nil {
@@ -618,7 +621,7 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		usermon_etw_thread_pid := uetwthreadinfo.Win_Etw_threadinfo_pid
 		usermon_etw_thread_tid := uetwthreadinfo.Win_Etw_threadinfo_tid
 		fmt.Println("[EtwMonitor]: ThreadInfo: ", usermon_etw_thread_pid, usermon_etw_thread_tid)
-	} else if 302 == dataType {
+	case 302:
 		var uetwimageinfo UEtwImageModinfo
 		err := json.Unmarshal([]byte(udata), &uetwimageinfo)
 		if err != nil {
@@ -629,7 +632,7 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		usermon_etw_image_Baseaddr := uetwimageinfo.Win_Etw_imageinfo_ImageBase
 		usermon_etw_image_FileName := uetwimageinfo.Win_Etw_imageinfo_FileName
 		fmt.Println("[EtwMonitor]: ImageInfo: ", usermon_etw_image_pid, usermon_etw_image_Baseaddr, usermon_etw_image_FileName)
-	} else if 303 == dataType {
+	case 303:
 		var uetwnetworkinfo UEtwNetWorkTabinfo
 		err := json.Unmarshal([]byte(udata), &uetwnetworkinfo)
 		if err != nil {
@@ -641,7 +644,7 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		usermon_etw_network_localaddrport := uetwnetworkinfo.Win_Etw_network_LocalAddr + ":" + uetwnetworkinfo.Win_Etw_network_toLocalPort
 		usermon_etw_network_Remoteport := uetwnetworkinfo.Win_Etw_network_RemoteAddr + ":" + uetwnetworkinfo.Win_Etw_network_toRemotePort
 		fmt.Println("[EtwMonitor]: NetworkInfo: ", usermon_etw_network_pid, usermon_etw_network_protocol, usermon_etw_network_localaddrport, usermon_etw_network_Remoteport)
-	} else if 304 == dataType {
+	case 304:
 		var uetwregistertab UEtwResgiterTabinfo
 		err := json.Unmarshal([]byte(udata), &uetwregistertab)
 		if err != nil {
@@ -651,13 +654,10 @@ func ParseWinDataDispatch(hb map[string]string, req *pb.RawData, dataType int) {
 		usermon_etw_regtab_KeyHandle := uetwregistertab.Win_Etw_regtab_KeyHandle
 		usermon_etw_regtab_KeyName := uetwregistertab.Win_Etw_regtab_KeyName
 		fmt.Println("[EtwMonitor]: RegisterTab: ", usermon_etw_regtab_KeyHandle, usermon_etw_regtab_KeyName)
-	} else if 401 == dataType { // Etw mon enable
-		fmt.Println(udata)
-	} else if 402 == dataType { // Etw mon disable
-		fmt.Println(udata)
-	} else if 403 == dataType { // Kernel mon enable
-		fmt.Println(udata)
-	} else if 404 == dataType { // Kernel mon disable
-		fmt.Println(udata)
+	case 401, 402, 403, 404:
+		// Etw mon enable
+		// Etw mon disable
+		// Kernel mon enable
+		// Kernel mon disable
 	}
 }
