@@ -21,7 +21,7 @@ func SendCommand(c *gin.Context) {
 	// we only parse once
 	err := c.BindJSON(&command)
 	if err != nil {
-		common.Response(c, common.SuccessCode, err.Error())
+		common.Response(c, common.ErrorCode, err.Error())
 		return
 	}
 	err = pool.GlobalGRPCPool.SendCommand(command.AgentID, &command.Command)

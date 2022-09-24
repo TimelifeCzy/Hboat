@@ -1,3 +1,4 @@
+// handler handles the grpc connection
 package handler
 
 import (
@@ -11,46 +12,71 @@ import (
 	"hboat/grpc/transfer/pool"
 	pb "hboat/grpc/transfer/proto"
 
+	"hboat/config"
+	ds "hboat/datasource"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc/peer"
 )
+
+// Only instance for the grpc service, updates the collections in
+// this status.
+var statusC *mongo.Collection
 
 // TransferHandler implements svc.TransferServer
 type TransferHandler struct{}
 
-func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) error {
+func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) (err error) {
+	var agentID string
+	var addr string
+
+	// Receive the very first package once grpc established
 	data, err := stream.Recv()
 	if err != nil {
 		return err
 	}
-	agentID := data.AgentID
+
+	// Get the agentid and ip address from connection.
+	agentID = data.AgentID
 	p, ok := peer.FromContext(stream.Context())
 	if !ok {
 		return errors.New("client ip get error")
 	}
-	addr := p.Addr.String()
+	addr = p.Addr.String()
 	fmt.Printf("Get connection %s from %s\n", agentID, addr)
 
-	createAt := time.Now().UnixNano() / (1000 * 1000 * 1000)
+	// Initialize the connection
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	connection := pool.Connection{
+	conn := pool.Connection{
 		AgentID:     agentID,
 		Addr:        addr,
-		CreateAt:    createAt,
+		CreateAt:    time.Now().Unix(),
 		CommandChan: make(chan *pool.Command),
 		Ctx:         ctx,
 		CancelFunc:  cancelFunc,
 	}
-
-	err = pool.GlobalGRPCPool.Add(agentID, &connection)
-	if err != nil {
+	if err = pool.GlobalGRPCPool.Add(agentID, &conn); err != nil {
 		return err
 	}
 
-	defer pool.GlobalGRPCPool.Delete(agentID)
-	go receiveData(stream, &connection)
-	go sendData(stream, &connection)
+	// Data update, also, update the address of the grpc for sendcommand
+	// TODO: use channel or just put in kafka
+	options := options.Update().SetUpsert(true)
 
-	<-connection.Ctx.Done()
+	_, err = statusC.UpdateOne(context.Background(), bson.M{"agent_id": agentID},
+		bson.M{"$set": bson.M{
+			"addr":         addr,
+			"create_at":    conn.CreateAt,
+			"agent_detail": bson.M{"hostname": data.Hostname},
+			"status":       true,
+		}}, options)
+
+	defer pool.GlobalGRPCPool.Delete(agentID)
+	go recvData(stream, &conn)
+	go sendData(stream, &conn)
+	<-conn.Ctx.Done()
 	return nil
 }
 
@@ -77,7 +103,7 @@ func sendData(stream pb.Transfer_TransferServer, conn *pool.Connection) {
 	}
 }
 
-func receiveData(stream pb.Transfer_TransferServer, conn *pool.Connection) {
+func recvData(stream pb.Transfer_TransferServer, conn *pool.Connection) {
 	defer conn.CancelFunc()
 	for {
 		select {
@@ -96,6 +122,7 @@ func receiveData(stream pb.Transfer_TransferServer, conn *pool.Connection) {
 // handleData handles received data
 //
 // TODO: heartbeat to influxdb or ES
+// Handle processes
 func handleData(req *pb.RawData, conn *pool.Connection) {
 	intranet_ipv4 := strings.Join(req.IntranetIPv4, ",")
 	intranet_ipv6 := strings.Join(req.IntranetIPv6, ",")
@@ -129,10 +156,12 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 				}
 			}
 			conn.LastHBTime = time.Now().Unix()
+			statusC.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
+				bson.M{"$set": bson.M{"agent_detail": data, "last_heartbeat_time": conn.LastHBTime}})
 			conn.SetAgentDetail(data)
 		// plugin-heartbeat
 		case dataType == 2:
-			data := make(map[string]interface{}, 20)
+			data := make(map[string]interface{})
 			for k, v := range value.Body.Fields {
 				// skip special field, hard-code
 				if k == "pversion" {
@@ -146,7 +175,18 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 					data[k] = v
 				}
 			}
+			// Added heartbeat_time with plugin
+			data["last_heartbeat_time"] = time.Now().Unix()
+			statusC.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
+				bson.M{"$set": bson.M{"plugin_detail": bson.M{value.Body.Fields["name"]: data}}})
 			conn.SetPluginDetail(value.Body.Fields["name"], data)
+		// For now, we only take care some basic record from linux and windows, like processes,
+		// sockets and so on, which should be collected by plugin collector. The others datas,
+		// just put it in kafka. Maybe, we'll update the agent, let the agent upload these to
+		// kafka directly
+		//
+		// TODO: kafka upload under dev
+
 		// windows
 		case dataType >= 100 && dataType <= 400:
 			for _, item := range req.Item {
@@ -157,4 +197,12 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 			// TODO
 		}
 	}
+}
+
+func init() {
+	mongoClient, err := ds.NewMongoDB(config.MongoURI, 5)
+	if err != nil {
+		panic(err)
+	}
+	statusC = mongoClient.Database(ds.Database).Collection(config.MAgentStatusCollection)
 }
