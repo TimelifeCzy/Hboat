@@ -17,6 +17,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc/peer"
 )
 
@@ -62,11 +63,15 @@ func (h *TransferHandler) Transfer(stream pb.Transfer_TransferServer) (err error
 
 	// Data update, also, update the address of the grpc for sendcommand
 	// TODO: use channel or just put in kafka
-	if _, err = statusC.UpdateOne(context.Background(), bson.M{"agent_id": agentID},
-		bson.M{"$set": bson.M{"addr": addr, "create_at": conn.CreateAt, "agent_detail": bson.M{"hostname": data.Hostname}}}); err != nil {
-		statusC.InsertOne(context.Background(), bson.M{"agent_id": agentID,
-			"addr": addr, "create_at": conn.CreateAt})
-	}
+	options := options.Update().SetUpsert(true)
+
+	_, err = statusC.UpdateOne(context.Background(), bson.M{"agent_id": agentID},
+		bson.M{"$set": bson.M{
+			"addr":         addr,
+			"create_at":    conn.CreateAt,
+			"agent_detail": bson.M{"hostname": data.Hostname},
+			"status":       true,
+		}}, options)
 
 	defer pool.GlobalGRPCPool.Delete(agentID)
 	go recvData(stream, &conn)
@@ -156,7 +161,7 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 			conn.SetAgentDetail(data)
 		// plugin-heartbeat
 		case dataType == 2:
-			data := make(map[string]interface{}, 20)
+			data := make(map[string]interface{})
 			for k, v := range value.Body.Fields {
 				// skip special field, hard-code
 				if k == "pversion" {
@@ -170,6 +175,8 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 					data[k] = v
 				}
 			}
+			// Added heartbeat_time with plugin
+			data["last_heartbeat_time"] = time.Now().Unix()
 			statusC.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
 				bson.M{"$set": bson.M{"plugin_detail": bson.M{value.Body.Fields["name"]: data}}})
 			conn.SetPluginDetail(value.Body.Fields["name"], data)

@@ -1,10 +1,14 @@
 package pool
 
 import (
+	"context"
 	"errors"
+	ds "hboat/datasource"
 	pb "hboat/grpc/transfer/proto"
 	"sync"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // TODO just testing
@@ -52,6 +56,8 @@ func (g *GRPCPool) Delete(agentID string) {
 	g.connLock.Lock()
 	defer g.connLock.Unlock()
 	delete(g.connPool, agentID)
+	ds.StatusC.UpdateOne(context.Background(), bson.M{"agent_id": agentID},
+		bson.M{"$set": bson.M{"status": false}})
 }
 
 func (g *GRPCPool) Count() int {
