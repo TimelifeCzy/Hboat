@@ -227,14 +227,18 @@ type UFileInfo struct {
 	Win_User_fileinfo_seFileModify         string `json:"win_user_fileinfo_seFileModify"`
 }
 type UEtwProcessinfo struct {
-	Win_Etw_processinfo_pid  string `json:"win_etw_processinfo_pid"`
-	Win_Etw_processinfo_Path string `json:"win_etw_processinfo_path"`
+	Win_Etw_processinfo_EventName string `json:"win_etw_processinfo_eventname"`
+	Win_Etw_processinfo_ParentId  string `json:"win_etw_processinfo_parentid"`
+	Win_Etw_processinfo_Status    string `json:"win_etw_processinfo_status"`
+	Win_Etw_processinfo_pid       string `json:"win_etw_processinfo_pid"`
+	Win_Etw_processinfo_Path      string `json:"win_etw_processinfo_path"`
 }
 type UEtwThreadinfo struct {
 	Win_Etw_threadinfo_pid            string `json:"win_etw_threadinfo_pid"`
 	Win_Etw_threadinfo_tid            string `json:"win_etw_threadinfo_tid"`
 	Win_Etw_threadinfo_Win32StartAddr string `json:"win_etw_threadinfo_win32startaddr"`
 	Win_Etw_threadinfo_ThreadFlags    string `json:"win_etw_threadinfo_flags"`
+	Win_Etw_threadinfo_EventName      string `json:"win_etw_threadinfo_eventname"`
 }
 type UEtwImageModinfo struct {
 	Win_Etw_imageinfo_ProcessId      string `json:"win_etw_imageinfo_processId"`
@@ -246,8 +250,18 @@ type UEtwImageModinfo struct {
 	Win_Etw_imageinfo_TimeDateStamp  string `json:"win_etw_imageinfo_timeDateStamp"`
 	Win_Etw_imageinfo_DefaultBase    string `json:"win_etw_imageinfo_defaultBase"`
 	Win_Etw_imageinfo_FileName       string `json:"win_etw_imageinfo_fileName"`
+	Win_Etw_imageinfo_EventName      string `json:"win_etw_imageinfo_eventname"`
 }
 type UEtwFileIoinfo struct {
+	Win_Etw_FileIo_EventName      string `json:"win_etw_fileio_eventname"`
+	Win_Etw_FileIo_FilePath       string `json:"win_etw_fileio_FilePath"`
+	Win_Etw_FileIo_FileName       string `json:"win_etw_fileio_FileName"`
+	Win_Etw_FileIo_Pid            string `json:"win_etw_fileio_Pid"`
+	Win_Etw_FileIo_Tid            string `json:"win_etw_fileio_Tid"`
+	Win_Etw_FileIo_FileAttributes string `json:"win_etw_fileio_FileAttributes"`
+	Win_Etw_FileIo_CreateOptions  string `json:"win_etw_fileio_CreateOptions"`
+	Win_Etw_FileIo_ShareAccess    string `json:"win_etw_fileio_ShareAccess"`
+	Win_Etw_FileIo_Offset         string `json:"win_etw_fileio_Offset"`
 }
 type UEtwResgiterTabinfo struct {
 	Win_Etw_regtab_InitialTime string `json:"win_etw_regtab_initialTime"`
@@ -255,6 +269,7 @@ type UEtwResgiterTabinfo struct {
 	Win_Etw_regtab_Index       string `json:"win_etw_regtab_index"`
 	Win_Etw_regtab_KeyHandle   string `json:"win_etw_regtab_keyHandle"`
 	Win_Etw_regtab_KeyName     string `json:"win_etw_regtab_keyName"`
+	Win_Etw_regtab_EventName   string `json:"win_etw_regtab_eventname"`
 }
 type UEtwNetWorkTabinfo struct {
 	Win_Etw_network_addressFamily   string `json:"win_network_addressfamily"`
@@ -266,6 +281,7 @@ type UEtwNetWorkTabinfo struct {
 	Win_Etw_network_processPath     string `json:"win_network_procespath"`
 	Win_Etw_network_processPathSize string `json:"win_network_processpathsize"`
 	Win_Etw_network_processId       string `json:"win_network_processid"`
+	Win_Etw_network_eventName       string `json:"win_network_eventname"`
 }
 
 // 2021-11-27  v1.0 添加解析
