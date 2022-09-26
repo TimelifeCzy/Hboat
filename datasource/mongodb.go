@@ -13,10 +13,12 @@ import (
 const (
 	Database       = "hades"
 	AgentStatusCol = "agentstatus"
+	PluginCol      = "plugin"
 )
 
 var MongoInst *mongo.Client
 var StatusC *mongo.Collection
+var PluginC *mongo.Collection
 
 func NewMongoDB(uri string, poolsize uint64) (*mongo.Client, error) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
@@ -68,4 +70,5 @@ func init() {
 		panic(err)
 	}
 	StatusC = MongoInst.Database(Database).Collection(config.MAgentStatusCollection)
+	PluginC = MongoInst.Database(Database).Collection(PluginCol)
 }

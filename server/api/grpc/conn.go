@@ -46,8 +46,8 @@ func AgentCount(c *gin.Context) {
 }
 
 type ConnStatRsp struct {
-	AgentInfo   map[string]interface{}            `json:"agent_info"`
-	PluginsInfo map[string]map[string]interface{} `json:"plugins_info"`
+	AgentInfo   map[string]interface{}   `json:"agent_info"`
+	PluginsInfo []map[string]interface{} `json:"plugins_info"`
 }
 
 func AgentStat(c *gin.Context) {
@@ -64,10 +64,25 @@ func AgentStat(c *gin.Context) {
 	agentInfo["last_heartbeat_time"] = as.LastHBTime
 	agentInfo["addr"] = as.Addr
 
+	pluginList := make([]map[string]interface{}, 0, len(as.PluginDetail))
+	for k := range as.PluginDetail {
+		// 增加状态
+		as.PluginDetail[k]["status"] = false
+		if hb, ok := as.PluginDetail[k]["last_heartbeat_time"]; ok {
+			if hbtime, ok := hb.(int64); ok {
+				if time.Now().Unix()-hbtime <= 3*60 {
+					as.PluginDetail[k]["status"] = true
+				}
+			}
+		}
+		pluginList = append(pluginList, as.PluginDetail[k])
+	}
+
 	res := ConnStatRsp{
 		AgentInfo:   agentInfo,
-		PluginsInfo: as.PluginDetail,
+		PluginsInfo: pluginList,
 	}
+
 	common.Response(c, common.SuccessCode, res)
 }
 
