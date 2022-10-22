@@ -3,6 +3,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -178,9 +179,34 @@ func handleData(req *pb.RawData, conn *pool.Connection) {
 			}
 			// Added heartbeat_time with plugin
 			data["last_heartbeat_time"] = time.Now().Unix()
+			// Do not cover on this
 			statusC.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
-				bson.M{"$set": bson.M{"plugin_detail": bson.M{value.Body.Fields["name"]: data}}})
+				bson.M{"$set": bson.M{"plugin_detail." + value.Body.Fields["name"]: data}})
 			conn.SetPluginDetail(value.Body.Fields["name"], data)
+		case dataType == 2001, dataType == 1001, dataType == 5001, dataType == 3004:
+			var field string
+			switch dataType {
+			case 5001:
+				field = "sockets"
+			case 3004:
+				field = "users"
+			case 1001:
+				field = "processes"
+			case 2001:
+				field = "crons"
+			}
+			data := make([]map[string]interface{}, 0)
+			err := json.Unmarshal([]byte(value.Body.Fields["data"]), &data)
+			if err != nil {
+				return
+			}
+			options := options.Update().SetUpsert(true)
+
+			if _, err = ds.AssetC.UpdateOne(context.Background(), bson.M{"agent_id": req.AgentID},
+				bson.M{"$set": bson.M{field: data}}, options); err != nil {
+				//log
+				return
+			}
 		// For now, we only take care some basic record from linux and windows, like processes,
 		// sockets and so on, which should be collected by plugin collector. The others datas,
 		// just put it in kafka. Maybe, we'll update the agent, let the agent upload these to

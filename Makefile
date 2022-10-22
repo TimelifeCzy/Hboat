@@ -7,7 +7,7 @@ hboat_cmd: \
 .PHONY: pre_show
 pre_show:
 	@echo "┌──────────────────────────────┐"
-	@echo "│   \033[35mHboat\033[0m (Hades Server Side)  │"
+	@printf "│   \033[35mHboat\033[0m (Hades Server Side)  │\n"
 	@echo "│         @chriskaliX          │"
 	@echo "└──────────────────────────────┘"
 	@printf "$(INFO_COLOR) Clean for the old hboat...\n"

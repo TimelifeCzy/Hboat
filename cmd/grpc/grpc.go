@@ -18,7 +18,6 @@ var grpcCommand = &cobra.Command{
 var enableCA bool
 var port int
 var addr string
-
 var wport int
 
 func init() {
