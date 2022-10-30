@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	gApi "hboat/server/api/grpc"
+	"hboat/server/api/host"
 	"hboat/server/api/plugin"
 
 	"github.com/gin-contrib/cors"
@@ -31,6 +32,9 @@ func RunGrpcServer(port int) {
 	gGroup.GET("/select", plugin.PluginSelect)
 	gGroup.GET("/delete", plugin.PluginDel)
 	gGroup.POST("/send", plugin.SendPlugin)
+
+	aGroup := router.Group("/api/v1/asset")
+	aGroup.GET("get", host.AgentAsset)
 
 	router.Run(fmt.Sprintf(":%d", port))
 }

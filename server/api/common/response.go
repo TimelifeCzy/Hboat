@@ -15,10 +15,22 @@ const (
 )
 
 func Response(c *gin.Context, code StatusCode, message interface{}) {
-	c.IndentedJSON(
-		http.StatusOK, gin.H{
-			"code": code,
-			"data": message,
-		},
-	)
+	switch code {
+	case SuccessCode:
+		c.IndentedJSON(
+			http.StatusOK, gin.H{
+				"code":    code,
+				"data":    message,
+				"message": "",
+			},
+		)
+	default:
+		c.IndentedJSON(
+			http.StatusOK, gin.H{
+				"code":    code,
+				"data":    "",
+				"message": message,
+			},
+		)
+	}
 }

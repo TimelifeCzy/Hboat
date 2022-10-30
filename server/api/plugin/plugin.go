@@ -160,6 +160,32 @@ func SendPlugin(c *gin.Context) {
 			DownloadURL: plgConfig.Urls,
 		},
 	}
+	// Add the plugins with status on
+	// for single grpc now
+	// TODO: let the frontend controls this
+	// BUG: logical problem, everytime a grpc reconnect, the plugin need to get from mongo
+	// or just wait the plugin heartbeat
+	// (or enforce the heartbeat of all in very first time)
+	conn, err := pool.GlobalGRPCPool.Get(pReq.AgentID)
+	if err != nil {
+		common.Response(c, common.ErrorCode, err.Error())
+		return
+	}
+	for name, detail := range conn.PluginDetail {
+		if name == plgConfig.Name {
+			continue
+		}
+		version, ok := detail["pversion"]
+		if !ok {
+			continue
+		}
+		command.Config = append(command.Config, &pb.ConfigItem{
+			Name:    name,
+			Version: version.(string),
+			SHA256:  plgConfig.Sha256,
+		})
+	}
+
 	err = pool.GlobalGRPCPool.SendCommand(pReq.AgentID, &command)
 	if err != nil {
 		common.Response(c, common.ErrorCode, err.Error())
