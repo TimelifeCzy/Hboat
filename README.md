@@ -1,3 +1,4 @@
+# New See : https://github.com/theSecHunter/Hades-Linux/tree/main/server
 # H-boat
 
 > The server side for Hades, it's under development for now
